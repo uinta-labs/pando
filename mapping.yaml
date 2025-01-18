@@ -1,0 +1,6 @@
+version: "1"
+package: comconnect
+module: github.com/uinta-labs/pando
+#convert: gen_convert
+
+# Mappings are filled out by pggen_proto_map tool

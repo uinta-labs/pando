@@ -1,0 +1,163 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id String @id @default(uuid()) @db.Uuid
+
+  email      String  @unique
+  givenName  String? @map("given_name")
+  familyName String? @map("family_name")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  password         Password?
+  notes            Note[]
+  OrganizationUser OrganizationUser[]
+
+  @@map("user")
+}
+
+model Password {
+  hash String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String @unique @map("user_id") @db.Uuid
+
+  @@map("password")
+}
+
+model Note {
+  id    String @id @default(uuid()) @db.Uuid
+  title String
+  body  String
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String @map("user_id") @db.Uuid
+
+  @@map("note")
+}
+
+model Organization {
+  id   String @id @default(uuid()) @db.Uuid
+  name String
+
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+  OrganizationUser OrganizationUser[]
+  Fleet            Fleet[]
+
+  @@map("organization")
+}
+
+model OrganizationUser {
+  id String @id @default(uuid()) @db.Uuid
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId         String       @map("user_id") @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  organizationId String       @map("organization_id") @db.Uuid
+
+  role String @default("administrator")
+
+  @@map("organization_user")
+}
+
+model Fleet {
+  id String @id @default(uuid()) @db.Uuid
+
+  name String
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  devices Device[]
+
+  organization   Organization    @relation(fields: [organizationId], references: [id])
+  organizationId String          @map("organization_id") @db.Uuid
+  FleetSchedule  FleetSchedule[]
+
+  defaultSchedule   Schedule? @relation(fields: [defaultScheduleId], references: [id])
+  defaultScheduleId String?   @map("default_schedule_id") @db.Uuid
+
+  @@map("fleet")
+}
+
+model Schedule {
+  id String @id @default(uuid()) @db.Uuid
+
+  name  String
+  state String
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  containers    Container[]
+  FleetSchedule FleetSchedule[]
+  Fleet         Fleet[]
+
+  @@map("schedule")
+}
+
+model FleetSchedule {
+  id String @id @default(uuid()) @db.Uuid
+
+  fleet      Fleet    @relation(fields: [fleetId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  fleetId    String   @map("fleet_id") @db.Uuid
+  schedule   Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  scheduleId String   @map("schedule_id") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("fleet_schedule")
+}
+
+model Container {
+  id        String   @id @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  name             String
+  containerImage   String    @map("container_image")
+  env              Json      @default("{}") @map("env")
+  privileged       Boolean   @default(false)
+  networkMode      String    @map("network_mode")
+  ports            Json      @default("[]")
+  bindDev          Boolean   @default(false) @map("bind_dev")
+  bindProc         Boolean   @default(false) @map("bind_proc")
+  bindSys          Boolean   @default(false) @map("bind_sys")
+  bindShm          Boolean   @default(false) @map("bind_shm")
+  bindCgroup       Boolean   @default(false) @map("bind_cgroup")
+  bindDockerSocket Boolean   @default(false) @map("bind_docker_socket")
+  bindBoot         Boolean   @default(false) @map("bind_boot")
+  command          String    @default("") @map("command")
+  entrypoint       String    @default("") @map("entrypoint")
+  Schedule         Schedule? @relation(fields: [scheduleId], references: [id])
+  scheduleId       String?   @db.Uuid @map("schedule_id")
+
+  @@map("container")
+}
+
+model Device {
+  id String @id @default(uuid()) @db.Uuid
+
+  name String
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  fleet   Fleet  @relation(fields: [fleetId], references: [id])
+  fleetId String @map("fleet_id") @db.Uuid
+
+  @@map("device")
+}

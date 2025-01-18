@@ -1,0 +1,13 @@
+version: v1
+managed:
+  enabled: true
+  go_package_prefix:
+    default: github.com/uinta-labs/pando/gen
+plugins:
+  # Go
+  - plugin: go
+    out: gen
+    opt: paths=source_relative
+  - plugin: connect-go
+    out: gen
+    opt: paths=source_relative
