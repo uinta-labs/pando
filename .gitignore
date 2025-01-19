@@ -24,7 +24,6 @@ go.work.sum
 .idea/
 
 bin/
-gen/
 
 node_modules
 
